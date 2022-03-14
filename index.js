@@ -28,20 +28,24 @@ const tokens = require('./tokens');
 async function checkPair(args) {
   const { inputTokenSymbol, inputTokenAddress, outputTokenSymbol, outputTokenAddress, inputAmount } = args
 
-  const exchangeAddress = await poolsAndExchanges.uniswapFactoryContract.methods.getExchange(outputTokenAddress).call()
-  const exchangeContract = new web3.eth.Contract(poolsAndExchanges.UNISWAP_EXCHANGE_ABI, exchangeAddress)
+  // const exchangeAddress = await poolsAndExchanges.uniswapFactoryContract.methods.getExchange(outputTokenAddress).call()
+  // const exchangeContract = new web3.eth.Contract(poolsAndExchanges.UNISWAP_EXCHANGE_ABI, exchangeAddress)
+  // const uniswapResult = await exchangeContract.methods.getEthToTokenInputPrice(inputAmount).call()
 
-  const uniswapResult = await exchangeContract.methods.getEthToTokenInputPrice(inputAmount).call()
-  let kyberResult = await poolsAndExchanges.kyberRateContract.methods.getExpectedRate(inputTokenAddress, outputTokenAddress, inputAmount).call()
+  // get Uniswap Pair Address
+  const pairAddress = await poolsAndExchanges.uniswapFactoryContract.methods.getPair(inputTokenAddress, outputTokenAddress).call()
+
+  //get Uniswap Pair's Contract from it's address
+  const pairContract = new web3.eth.Contract(poolsAndExchanges.UNISWAP_EXCHANGE_ABI, pairAddress)
+  const tokenReserves = await pairContract.methods.getReserves().call()
+
 
   console.table([{
-    'Input Token': inputTokenSymbol,
-    'Output Token': outputTokenSymbol,
-    'Input Amount': web3.utils.fromWei(inputAmount, 'Ether'),
-    'Uniswap Return': web3.utils.fromWei(uniswapResult, 'Ether'),
-    'Kyber Expected Rate': web3.utils.fromWei(kyberResult.expectedRate, 'Ether'),
-    'Kyber Min Return': web3.utils.fromWei(kyberResult.worstRate, 'Ether'),
-    'Timestamp': moment().tz('America/Chicago').format(),
+    'Token 1': inputTokenSymbol,
+    'Token 1 Reserve': tokenReserves[0],
+    'Token 2': outputTokenSymbol,
+    'Token 2 Reserve': tokenReserves[1],
+    'Timestamp': tokenReserves[2],
   }])
 }
 
@@ -57,10 +61,9 @@ async function monitorPrice() {
   monitoringPrice = true
 
   try {
-    await checkPair(tokens.MKR)
-    await checkPair(tokens.DAI)
-    await checkPair(tokens.KNC)
-    await checkPair(tokens.LINK)
+    await checkPair(tokens.SHIB)
+    // await checkPair(tokens.DAI)
+
   } catch (error) {
       console.error(error)
       monitoringPrice = false
