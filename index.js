@@ -26,26 +26,26 @@ const tokens = require('./tokens');
 
 
 async function checkPair(args) {
-  const { inputTokenSymbol, inputTokenAddress, outputTokenSymbol, outputTokenAddress, inputAmount } = args
+  const { token0, token0Address, token1, token1Address } = args
 
   // const exchangeAddress = await poolsAndExchanges.uniswapFactoryContract.methods.getExchange(outputTokenAddress).call()
   // const exchangeContract = new web3.eth.Contract(poolsAndExchanges.UNISWAP_EXCHANGE_ABI, exchangeAddress)
   // const uniswapResult = await exchangeContract.methods.getEthToTokenInputPrice(inputAmount).call()
 
   // get Uniswap Pair Address
-  const pairAddress = await poolsAndExchanges.uniswapFactoryContract.methods.getPair(inputTokenAddress, outputTokenAddress).call()
+  const pairAddress = await poolsAndExchanges.uniswapFactoryContract.methods.getPair( token0Address, token1Address).call()
 
   //get Uniswap Pair's Contract from it's address
   const pairContract = new web3.eth.Contract(poolsAndExchanges.UNISWAP_EXCHANGE_ABI, pairAddress)
   const tokenReserves = await pairContract.methods.getReserves().call()
 
-
   console.table([{
-    'Token 1': inputTokenSymbol,
+    'Token 1': token0,
     'Token 1 Reserve': tokenReserves[0],
-    'Token 2': outputTokenSymbol,
+    'Token 2': token1,
     'Token 2 Reserve': tokenReserves[1],
-    'Timestamp': tokenReserves[2],
+    'Block Timestamp': tokenReserves[2],
+    'Time': moment().tz('America/Chicago').format(),
   }])
 }
 
@@ -62,7 +62,7 @@ async function monitorPrice() {
 
   try {
     await checkPair(tokens.SHIB)
-    // await checkPair(tokens.DAI)
+    await checkPair(tokens.DAI)
 
   } catch (error) {
       console.error(error)
